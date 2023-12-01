@@ -1,0 +1,97 @@
+Q1. Which tracks appeared in the most playlists? How many playlists did they appear in?
+
+  code:
+    SELECT tracks.Name, COUNT(*) AS "# of Playlists"
+    FROM playlist_track
+    LEFT JOIN tracks
+    	ON playlist_track.TrackId = tracks.TrackId
+    GROUP BY playlist_track.TrackId
+    ORDER BY COUNT (playlist_track.PlaylistId) DESC
+    LIMIT 100;
+
+  Answer: There are 41 songs that appear in 5 different playlists. A few of those songs are Intoitus: "Adorate Deum", "Miserere mei, Deus", "Aria Mit 30 Veränderungen, BWV 988 "Goldberg Variations": Aria", "Suite for Solo Cello No. 1 in G Major, BWV 1007: I. Prélude", and "The Messiah: Behold, I Tell You a Mystery... The Trumpet Shall Sound"
+
+Q2. Which track generated the most revenue? Which album? Which genre?
+
+  code:
+    SELECT tracks.Name, SUM(invoice_items.UnitPrice) AS "Track Revenue"
+    FROM invoice_items
+    LEFT JOIN tracks
+    	ON invoice_items.TrackId = tracks.TrackId
+    GROUP BY invoice_items.TrackId
+    ORDER BY SUM(invoice_items.UnitPrice) DESC
+    LIMIT 10;
+
+    SELECT tracks.AlbumId, albums.Title, SUM(invoice_items.UnitPrice) AS "Album Revenue"
+    FROM invoice_items
+    JOIN tracks
+    	ON invoice_items.TrackId = tracks.TrackId
+    JOIN albums
+    	ON tracks.AlbumId = albums.AlbumId
+    GROUP BY tracks.AlbumId
+    ORDER BY SUM(invoice_items.UnitPrice) DESC
+    LIMIT 10;
+
+    SELECT tracks.GenreId, genres.Name, ROUND(SUM(invoice_items.UnitPrice), 2) AS "Genre Revenue"
+    FROM invoice_items
+    JOIN tracks
+    	ON invoice_items.TrackId = tracks.TrackId
+    JOIN genres
+    	ON genres.GenreId = tracks.GenreId
+    GROUP BY tracks.GenreId
+    ORDER BY SUM(invoice_items.UnitPrice) DESC;
+
+Q3. Which countries have the highest sales revenue? What percentage of total revenue does each country make up?
+
+  code:
+    SELECT invoices.BillingCountry, ROUND(SUM(invoice_items.UnitPrice), 2) AS "Country Revenue"
+    FROM invoice_items
+    JOIN invoices
+    	ON invoice_items.InvoiceId = invoices.InvoiceId
+    GROUP BY invoices.BillingCountry
+    ORDER BY SUM(invoice_items.UnitPrice) DESC
+    LIMIT 10;
+
+    SELECT invoices.BillingCountry, 
+    	ROUND(SUM(invoice_items.UnitPrice), 2) AS "Country Revenue", 
+    	ROUND(SUM(invoice_items.UnitPrice)*100 / (SELECT SUM(invoice_items.UnitPrice) FROM invoice_items), 2) AS "% of total revenue"
+    FROM invoice_items
+    JOIN invoices
+    	ON invoice_items.InvoiceId = invoices.InvoiceId
+    GROUP BY invoices.BillingCountry
+    ORDER BY SUM(invoice_items.UnitPrice) DESC
+    LIMIT 10;
+
+Q4. How many customers did each employee support? What is the average revenue for each sale? What is their total sale?
+
+  code:
+    SELECT employees.LastName,
+    	employees.FirstName,
+    	COUNT(customers.CustomerId) AS "Customers Helped"
+    FROM employees
+    JOIN customers
+    	ON employees.EmployeeId = customers.SupportRepId
+    GROUP BY employees.EmployeeId
+    ORDER BY COUNT(customers.CustomerId) DESC;
+
+  SELECT employees.LastName,
+  	employees.FirstName,
+  	ROUND(AVG(invoices.Total), 2) AS "Average Sales",
+  	ROUND(SUM(invoices.Total), 2) AS "Total Sales"
+  FROM employees
+  JOIN customers
+  	ON employees.EmployeeId = customers.SupportRepId
+  JOIN invoices
+  	ON customers.CustomerId = invoices.CustomerId
+  GROUP BY employees.EmployeeId
+  ORDER BY COUNT(customers.SupportRepId) DESC;
+
+
+
+
+
+
+
+
+
+
